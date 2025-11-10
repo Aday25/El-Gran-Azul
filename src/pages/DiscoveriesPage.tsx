@@ -13,7 +13,7 @@ import oceanBack from "../assets/ocean-bg.png";
 
 const categories = [
   {
-    title: "🦈 Vida Marina",
+    title: "🐠 Vida Marina",
     slug: "marine-life",
     image: marineLifeImg,
     description: "Explora la asombrosa diversidad de criaturas que habitan nuestros océanos.",
