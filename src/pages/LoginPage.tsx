@@ -11,7 +11,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // 👈 Nuevo estado
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -40,8 +40,6 @@ export default function LoginPage() {
       });
 
       console.log("✅ Usuario guardado en Zustand");
-      console.log("📊 Estado actual:", useAuthStore.getState());
-
       navigate("/discoveries");
     } catch (err: any) {
       console.error(err.response?.data || "Error al iniciar sesión");
@@ -49,6 +47,10 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleForgotPassword = () => {
+    navigate("/forgot-password");
   };
 
   return (
@@ -69,7 +71,6 @@ export default function LoginPage() {
             disabled={loading}
           />
 
-          {/* 🧠 Campo de contraseña con botón "Ver" */}
           <div className="password-container">
             <input
               type={showPassword ? "text" : "password"}
@@ -84,6 +85,13 @@ export default function LoginPage() {
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? "Ocultar" : "Ver"}
+            </span>
+          </div>
+
+          {/* 🔐 Enlace "¿Olvidaste tu contraseña?" */}
+          <div className="forgot-password-link">
+            <span className="auth-link" onClick={handleForgotPassword}>
+              ¿Has olvidado tu contraseña?
             </span>
           </div>
 

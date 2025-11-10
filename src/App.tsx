@@ -10,7 +10,7 @@ import { useEffect } from "react";
 function AppContent() {
   const location = useLocation();
 
-  const hidePaths = ["/", "/welcome", "/login", "/register"];
+  const hidePaths = ["/", "/welcome", "/login", "/forgot-password","/reset-password/:token", "/register"];
   const shouldHide = hidePaths.some((p) =>
     p === "/" ? location.pathname === "/" : location.pathname.startsWith(p)
   );

@@ -1,9 +1,12 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import React from 'react';
 
 // Auth
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/ResetPasswordPage";
 
 // Users
 import ProfilePage from "../pages/ProfilePage";       
@@ -37,7 +40,7 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-function ProtectedRoute({ children }: ProtectedRouteProps) {
+function ProtectedRoute({ children }: ProtectedRouteProps): React.JSX.Element {
   const userId = useAuthStore((state) => state.userId);
 
   if (!userId) {
@@ -48,7 +51,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
 }
 
 /** PUBLIC ONLY ROUTE */
-function PublicOnlyRoute({ children }: ProtectedRouteProps) {
+function PublicOnlyRoute({ children }: ProtectedRouteProps): React.JSX.Element {
   const userId = useAuthStore((state) => state.userId);
 
   if (userId) {
@@ -59,17 +62,19 @@ function PublicOnlyRoute({ children }: ProtectedRouteProps) {
 }
 
 /** ALERT PROTECTED ROUTE PARA EL TEST */
-function AlertProtectedRoute({ children }: ProtectedRouteProps) {
+function AlertProtectedRoute({ children }: ProtectedRouteProps): React.JSX.Element {
   const isAuthenticated = useAuthStore((state) => !!state.token);
-  const { showAlert } = useAlertContext(); // asegúrate de importar esto
+  const { showAlert } = useAlertContext();
+
   if (!isAuthenticated) {
     showAlert("Debes iniciar sesión para hacer el test 🦭", "warning");
     return <Navigate to="/login" replace />;
   }
+
   return <>{children}</>;
 }
 
-export default function AppRoutes() {
+export default function AppRoutes(): React.JSX.Element {
   return (
     <Routes>
       {/* 👋 WELCOME */}
@@ -115,6 +120,22 @@ export default function AppRoutes() {
         element={
           <PublicOnlyRoute>
             <RegisterPage />
+          </PublicOnlyRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicOnlyRoute>
+            <ForgotPasswordPage />
+          </PublicOnlyRoute>
+        }
+      />
+      <Route
+        path="/reset-password/:token"
+        element={
+          <PublicOnlyRoute>
+            <ResetPasswordPage />
           </PublicOnlyRoute>
         }
       />
