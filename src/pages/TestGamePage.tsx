@@ -18,7 +18,7 @@ import dancingSeal from "../assets/VirtualAssistant/dancing-seal.gif";
 const QUESTIONS: Question[] = [
   {
     text: "¿Qué te inspira más del océano?", options: [
-      { text: "Las criaturas marinas 🐠", category: "marine-life" },
+      { text: "Las criaturas marinas 🦈", category: "marine-life" },
       { text: "Los ecosistemas 🌊", category: "ocean-ecosystems" },
       { text: "Explorar 🔬", category: "science-exploration" },
       { text: "Problemas ⚠️", category: "problems-threats" },
@@ -99,7 +99,7 @@ const QUESTIONS: Question[] = [
   },
   {
     text: "Tu emoji favorito del océano", options: [
-      { text: "🐠", category: "marine-life" },
+      { text: "🦈", category: "marine-life" },
       { text: "🌊", category: "ocean-ecosystems" },
       { text: "🔬", category: "science-exploration" },
       { text: "⚠️", category: "problems-threats" },
@@ -134,7 +134,7 @@ const getPositiveMessage = (answers: (Answer | null)[], postCategory?: string) =
 
   switch (dominantCategory) {
     case "marine-life":
-      return "¡Eres un amante de la vida marina! 🐠";
+      return "¡Eres un amante de la vida marina! 🦈";
     case "ocean-ecosystems":
       return "Tu pasión por los ecosistemas marinos es inspiradora 🌊";
     case "science-exploration":

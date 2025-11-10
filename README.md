@@ -5,7 +5,7 @@ En este repositorio del **frontend** de un proyecto fullstack dedicado a la expl
 La aplicación permite a los usuarios:  
 - Explorar **descubrimientos brillantes** relacionados con la biología marina.  
 - Consultar publicaciones organizadas en **categorías temáticas**:  
-  - 🐠 Vida Marina  
+  - 🦈 Vida Marina  
   - 🌊 Ecosistemas Oceánicos  
   - 🔬 Ciencia y Exploración  
   - ⚠️ Problemas y Amenazas  

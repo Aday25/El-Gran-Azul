@@ -25,7 +25,7 @@ interface PostsState {
 }
 
 const categoryMap: Record<string, string> = {
-  "marine-life": "🐠 Vida Marina",
+  "marine-life": "🦈 Vida Marina",
   "ocean-ecosystems": "🌊 Ecosistemas Oceánicos",
   "science-exploration": "🔬 Ciencia y Exploración",
   "problems-threats": "⚠️ Problemas y Amenazas",

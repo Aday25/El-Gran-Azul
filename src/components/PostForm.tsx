@@ -36,7 +36,7 @@ export default function PostForm({ userId, postId, initialData, onPostSaved }: P
   const navigate = useNavigate();
 
   const allCategories: string[] = [
-    "🐠 Vida Marina",
+    "🦈 Vida Marina",
     "🌊 Ecosistemas Oceánicos",
     "🔬 Ciencia y Exploración",
     "⚠️ Problemas y Amenazas",
