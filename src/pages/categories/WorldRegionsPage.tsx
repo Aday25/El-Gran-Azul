@@ -1,4 +1,3 @@
-import React from "react";
 import CategoryPage from "./CategoryPage";
 import worldRegionsBg from "../../assets/categories-backgrounds/world-regions-background.png";
 

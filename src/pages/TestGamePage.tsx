@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Container, Typography, LinearProgress, Stack, Button, Box, Avatar } from "@mui/material";
-import QuestionCard, { Question } from "../components/QuestionCard";
-import ResultCard, { Post } from "../components/ResultCard";
+import QuestionCard from "../components/QuestionCard";
+import type { Question } from "../components/QuestionCard";
+import ResultCard from "../components/ResultCard";
+import type { Post as ResultPost } from "../components/ResultCard";
 import { useAuthStore } from "../store/authStore";
 import { useAlertContext } from "../context/AlertContext";
-import { pickPostByCategory, Answer } from "../utils/matcher";
+import { pickPostByCategory } from "../utils/matcher";
+import type { Answer } from "../utils/matcher";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import Confetti from "react-confetti";
+import React from 'react';
 
 import dancingSeal from "../assets/VirtualAssistant/dancing-seal.gif";
 
@@ -144,11 +148,11 @@ const getPositiveMessage = (answers: (Answer | null)[], postCategory?: string) =
   }
 };
 
-export default function TestGamePage(): JSX.Element {
+export default function TestGamePage(): React.JSX.Element {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(Answer | null)[]>(Array(QUESTIONS.length).fill(null));
-  const [resultPost, setResultPost] = useState<Post | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [resultPost, setResultPost] = useState<ResultPost | null>(null);
+  const [posts, setPosts] = useState<ResultPost[]>([]);
   const { showAlert } = useAlertContext();
   const isAuthenticated = useAuthStore((state) => !!state.token);
   const navigate = useNavigate();
@@ -156,7 +160,7 @@ export default function TestGamePage(): JSX.Element {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await api.get<{ data: Post[] }>("/api/posts");
+        const res = await api.get<{ data: ResultPost[] }>("/api/posts");
         setPosts(res.data.data || []);
       } catch (err) {
         console.error("Error fetching posts:", err);
@@ -164,7 +168,7 @@ export default function TestGamePage(): JSX.Element {
       }
     };
     fetchPosts();
-  }, []);
+  }, [showAlert]);
 
   const handleAnswer = (optionIndex: number, option: { text: string; category: string }) => {
     const newAnswers = [...answers];
@@ -180,7 +184,7 @@ export default function TestGamePage(): JSX.Element {
       showAlert("Debes iniciar sesión para hacer el test 🦭", "warning");
       return;
     }
-    const chosen = pickPostByCategory(answers.filter(Boolean), posts);
+    const chosen = pickPostByCategory(answers.filter(Boolean) as Answer[], posts);
     setResultPost(chosen || null);
   };
 
@@ -251,7 +255,7 @@ export default function TestGamePage(): JSX.Element {
                   sx={{
                     borderRadius: 2,
                     textTransform: "none",
-                    transition: "transform 0.2s ease, box-shadow: 0.3s ease",
+                    transition: "transform 0.2s ease, box-shadow 0.3s ease",
                     "&:hover": { transform: "scale(1.05)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" },
                   }}
                 >
@@ -303,7 +307,7 @@ export default function TestGamePage(): JSX.Element {
                     title: resultPost.title,
                     category: resultPost.category,
                     description: resultPost.description,
-                    image_url: resultPost.images?.[0]?.url || "https://via.placeholder.com/400x200?text=Sin+imagen",
+                    image_url: resultPost.image_url || "https://via.placeholder.com/400x200?text=Sin+imagen",
                   }}
                 />
               </Box>

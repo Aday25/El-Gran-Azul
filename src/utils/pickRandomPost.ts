@@ -1,4 +1,4 @@
-import { Post } from "../pages/AllDiscoveriesPage";
+import type { Post } from "../pages/AllDiscoveriesPage";
 
 export function pickRandomPost(posts: Post[], category?: string): Post | null {
   if (!posts?.length) return null;

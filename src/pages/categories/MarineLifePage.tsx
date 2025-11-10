@@ -1,4 +1,3 @@
-import React from "react";
 import CategoryPage from "./CategoryPage";
 import marineLifeBg from "../../assets/categories-backgrounds/marine-life-background.png";
 

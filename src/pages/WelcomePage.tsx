@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../store/authStore";
+import React from 'react';
 
 import FishesSVG from "../assets/fishes.png";
 import SharkSVG from "../assets/shark.png";
@@ -19,9 +20,9 @@ import "./WelcomePage.css";
 
 const title = "El Gran Azul";
 
-export default function WelcomePage() {
+export default function WelcomePage(): React.JSX.Element {
   const navigate = useNavigate();
-  const { userId } = useAuthStore();
+  const {} = useAuthStore(); // userId removido ya que no se usa
   const [started, setStarted] = useState(false);
   const [showFrame, setShowFrame] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);

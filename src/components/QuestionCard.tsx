@@ -1,5 +1,5 @@
-import React from "react";
 import { Card, CardContent, Typography, Button, Stack } from "@mui/material";
+import React from 'react';
 
 export interface Option {
   text: string;
@@ -21,7 +21,7 @@ export default function QuestionCard({
   question,
   onAnswer,
   selectedIndex,
-}: QuestionCardProps): JSX.Element {
+}: QuestionCardProps): React.JSX.Element {
   return (
     <Card sx={{ maxWidth: 700, mx: "auto", p: 2, borderRadius: 3, background: "#e1f5fe" }}>
       <CardContent>

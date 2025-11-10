@@ -1,6 +1,6 @@
-import React from "react";
 import { Card, CardMedia, CardContent, Typography, CardActionArea } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import React from 'react';
 
 export interface Post {
   id: number | string;
@@ -14,7 +14,7 @@ interface ResultCardProps {
   post: Post | null;
 }
 
-export default function ResultCard({ post }: ResultCardProps): JSX.Element | null {
+export default function ResultCard({ post }: ResultCardProps): React.JSX.Element | null {
   const navigate = useNavigate();
   if (!post) return null;
 

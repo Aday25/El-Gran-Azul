@@ -5,6 +5,7 @@ import { PostCard } from "../../components/PostCard";
 import { api } from "../../services/api";
 import '../../styles/PostsPage.css';
 import NavigationButtons from "../../components/NavigationButtons";
+import React from 'react';
 
 interface User {
   id: number;
@@ -26,7 +27,7 @@ interface Post {
   images?: { url: string }[];
   createdAt: string;
   userId: number;
-  user: User; 
+  user: User;
   likesCount?: number;
 }
 
@@ -38,11 +39,11 @@ const categoryMap: Record<string, string> = {
   "world-regions": "🌍 Regiones y Océanos del Mundo",
 };
 
-export const CategoryPostsPage = () => {
+export const CategoryPostsPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
 
   const categoryName = slug ? categoryMap[slug] : "";
 
@@ -63,7 +64,7 @@ export const CategoryPostsPage = () => {
         );
 
         setPosts(filteredPosts);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error fetching posts:", err);
         setError("No se pudieron cargar los posts");
       } finally {
@@ -84,7 +85,11 @@ export const CategoryPostsPage = () => {
 
   return (
     <Box className="page-container">
-      <Typography variant="h3" align="center" sx={{ mb: 4, fontWeight: "bold", textTransform: "uppercase" }}>
+      <Typography
+        variant="h3"
+        align="center"
+        sx={{ mb: 4, fontWeight: "bold", textTransform: "uppercase" }}
+      >
         {categoryName || slug?.replace("-", " ")}
       </Typography>
 
@@ -98,17 +103,17 @@ export const CategoryPostsPage = () => {
             <PostCard
               key={post.id}
               post={{
-                id: String(post.id),
+                id: post.id, // Cambiado de String(post.id) a post.id
                 title: post.title,
-                image: post.images?.[0]?.url || "",
-                likes: post.likesCount || 0,
-                user: post.user, 
+                image: post.images?.[0]?.url ?? "",
+                likes: post.likesCount ?? 0,
+                user: post.user,
                 date: post.createdAt,
               }}
-              categorySlug={slug}
+              categorySlug={slug ?? ""}
               categoryName={categoryName}
               from={`/category-posts/${slug}`}
-              onLikeUpdate={(newCount) => handleLikeUpdate(post.id, newCount)}
+              onLikeUpdate={(newCount: number) => handleLikeUpdate(post.id, newCount)}
             />
           ))}
         </Box>

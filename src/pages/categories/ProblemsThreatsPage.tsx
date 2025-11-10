@@ -1,4 +1,3 @@
-import React from "react";
 import CategoryPage from "./CategoryPage";
 import problemsThreatsBg from "../../assets/categories-backgrounds/problems-threats-background.png";
 

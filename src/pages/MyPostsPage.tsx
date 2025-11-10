@@ -4,6 +4,7 @@ import { PostCard } from "../components/PostCard";
 import '../pages/Discoveries.css';
 import { api } from "../services/api";
 import NavigationButtons from "../components/NavigationButtons";
+import React from 'react';
 
 interface User {
   id: number;
@@ -47,7 +48,7 @@ const MyPostsPage: React.FC = () => {
         const allPostsRes = await api.get(`/api/posts`);
         const allPosts: any[] = allPostsRes.data.data || [];
 
-          fetchedPosts = fetchedPosts.map(userPost => {
+        fetchedPosts = fetchedPosts.map(userPost => {
           const fullPost = allPosts.find(p => p.id === userPost.id);
           return {
             ...userPost,
@@ -94,24 +95,21 @@ const MyPostsPage: React.FC = () => {
       {posts.length === 0 && <p style={{ textAlign: "center" }}>No tienes publicaciones todavía.</p>}
 
       <div className="cards-grid">
-        {posts.map(post => {
-          const author = post.user?.username || "Tú";
-          return (
-            <PostCard
-              key={post.id}
-              post={{
-                id: String(post.id),
-                title: post.title,
-                image: getImageUrl(post.images?.[0]?.url),
-                likes: post.likesCount || 0,
-                user: post.user,
-                date: post.createdAt,
-              }}
-              from={`/my-posts/${userId}`}
-              onLikeUpdate={(newCount) => handleLikeUpdate(post.id, newCount)}
-            />
-          );
-        })}
+        {posts.map(post => (
+          <PostCard
+            key={post.id}
+            post={{
+              id: post.id, // Cambiado de String(post.id) a post.id
+              title: post.title,
+              image: getImageUrl(post.images?.[0]?.url),
+              likes: post.likesCount || 0,
+              user: post.user,
+              date: post.createdAt,
+            }}
+            from={`/my-posts/${userId}`}
+            onLikeUpdate={(newCount: number) => handleLikeUpdate(post.id, newCount)}
+          />
+        ))}
       </div>
       <NavigationButtons />
     </div>

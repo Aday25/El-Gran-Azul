@@ -1,4 +1,3 @@
-import React from "react";
 import CategoryPage from "./CategoryPage";
 import scienceExplorationBg from "../../assets/categories-backgrounds/science-exploration-background.png";
 

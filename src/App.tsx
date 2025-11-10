@@ -5,7 +5,6 @@ import "./App.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { AlertProvider } from "./context/AlertContext";
-import NavigationButtons from "./components/NavigationButtons";
 import { useEffect } from "react";
 
 function AppContent() {

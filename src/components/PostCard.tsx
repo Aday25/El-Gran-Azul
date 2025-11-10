@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Card,
   CardContent,
@@ -6,11 +5,11 @@ import {
   Typography,
   Box,
   IconButton,
-  Divider,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import { useLike } from "../hooks/useLike";
 import { useNavigate } from "react-router-dom";
+import React from 'react';
 
 interface User {
   id: number;
@@ -29,29 +28,36 @@ interface PostCardProps {
   from?: string;
   categorySlug?: string;
   categoryName?: string;
+  onLikeUpdate?: (newCount: number) => void;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, from, categorySlug, categoryName }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post, from, categorySlug, categoryName, onLikeUpdate }) => {
   const navigate = useNavigate();
 
- const handleCardClick = () => {
-  console.log("Navigating to post ID:", post.id);
+  const handleCardClick = () => {
+    console.log("Navigating to post ID:", post.id);
 
-  if (categorySlug && categoryName) {
-    navigate(`/post/${post.id}`, {
-      state: {
-        from: `/category-posts/${categorySlug}`,
-        categoryName,
-      },
-    });
-  } else {
-    navigate(`/post/${post.id}`, { state: { from: from || "/posts" } });
-  }
-};
-
+    if (categorySlug && categoryName) {
+      navigate(`/post/${post.id}`, {
+        state: {
+          from: `/category-posts/${categorySlug}`,
+          categoryName,
+        },
+      });
+    } else {
+      navigate(`/post/${post.id}`, { state: { from: from || "/posts" } });
+    }
+  };
 
   const { likesCount, isLiked, handleToggleLike } = useLike(post.id);
 
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleToggleLike();
+    if (onLikeUpdate) {
+      onLikeUpdate(likesCount + (isLiked ? -1 : 1));
+    }
+  };
 
   return (
     <Card
@@ -113,7 +119,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, from, categorySlug, ca
         >
           {post.title}
         </Typography>
-         <Typography variant="body2" sx={{ color: "#a8daff", fontWeight: 500 }}>
+        <Typography variant="body2" sx={{ color: "#a8daff", fontWeight: 500 }}>
           Por {post.user?.username ?? "Usuario desconocido"}
         </Typography>
         <Typography variant="caption" sx={{ color: "#b0e0ff" }}>
@@ -139,9 +145,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, from, categorySlug, ca
         >
           <IconButton
             size="small"
+            onClick={handleLikeClick}
             sx={{
-              color: "#00ffff",
-              "&:hover": { color: "#f32424ff", transform: "scale(1.2)" },
+              color: isLiked ? "#f32424ff" : "#00ffff",
+              "&:hover": { 
+                color: "#f32424ff", 
+                transform: "scale(1.2)" 
+              },
               transition: "all 0.3s ease",
             }}
           >
@@ -153,6 +163,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, from, categorySlug, ca
               fontWeight: 600,
               color: "#e0f7ff",
               textShadow: "0 0 6px rgba(0,255,255,0.4)",
+              ml: 1,
             }}
           >
             {likesCount}
