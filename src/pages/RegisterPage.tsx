@@ -24,7 +24,8 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:4000/auth/register", {
+      // ✅ CAMBIO CRÍTICO: Usar tu URL real de Render
+      const response = await axios.post("https://server-prod-03xe.onrender.com/auth/register", {
         username,
         firstname,
         lastname,
