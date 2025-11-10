@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 
+import successIcon from "../assets/icons/success.png";
+import errorIcon from "../assets/icons/error.png";
+import infoIcon from "../assets/icons/info.png";
+import warningIcon from "../assets/icons/warning.png";
+import alertIcon from "../assets/icons/alert.png";
+
 interface AlertData {
   message: string;
   type: "success" | "error" | "info" | "warning";
@@ -36,11 +42,12 @@ export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setTimeout(() => setAlert(null), duration);
   };
 
+  // ✅ USAR IMPORT DIRECTO EN LUGAR DE RUTAS
   const backgroundImages: Record<string, string> = {
-    success: "url('/src/assets/icons/success.png')",
-    error: "url('/src/assets/icons/error.png')",
-    info: "url('/src/assets/icons/info.png')",
-    warning: "url('/src/assets/icons/warning.png')",
+    success: `url(${successIcon})`,
+    error: `url(${errorIcon})`,
+    info: `url(${infoIcon})`,
+    warning: `url(${warningIcon})`,
   };
 
   return (
@@ -67,8 +74,7 @@ export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             color: "white",
             textShadow: "4px 4px 6px #000000",
             borderRadius: "20px",
-            backgroundImage:
-              backgroundImages[alert.type] || "url('/src/assets/icons/alert.png')",
+            backgroundImage: backgroundImages[alert.type] || `url(${alertIcon})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",

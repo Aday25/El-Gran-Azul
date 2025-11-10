@@ -28,7 +28,7 @@ export default function ResultCard({ post }: ResultCardProps): React.JSX.Element
         background: "linear-gradient(135deg, #b3e5fc, #e1f5fe)",
       }}
     >
-      <CardActionArea onClick={() => navigate(`/posts/${post.id}`)}>
+      <CardActionArea onClick={() => navigate(`/post/${post.id}`)}> {/* ✅ CAMBIADO A SINGULAR */}
         {post.image_url && (
           <CardMedia
             component="img"
@@ -36,6 +36,11 @@ export default function ResultCard({ post }: ResultCardProps): React.JSX.Element
             image={post.image_url}
             alt={post.title}
             sx={{ borderRadius: "12px 12px 0 0" }}
+            onError={(e) => {
+              // ✅ FALLBACK PARA IMÁGENES QUE NO CARGAN
+              e.currentTarget.src = "https://via.placeholder.com/400x200/0077be/ffffff?text=Imagen+no+disponible";
+              e.currentTarget.alt = "Imagen no disponible";
+            }}
           />
         )}
         <CardContent>

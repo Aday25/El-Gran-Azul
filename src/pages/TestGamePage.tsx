@@ -313,8 +313,24 @@ export default function TestGamePage(): React.JSX.Element {
               </Box>
             )}
 
-            <Button sx={{ mt: 3 }} onClick={() => window.location.reload()}>
-              Rehacer test
+            {/* ✅ CORREGIR BOTÓN REHACER TEST */}
+            <Button
+              sx={{
+                mt: 3,
+                backgroundColor: "#fff",
+                color: "#0077be",
+                "&:hover": {
+                  backgroundColor: "#f5f5f5",
+                }
+              }}
+              onClick={() => {
+                // ✅ RESETEAR EL ESTADO EN LUGAR DE RECARGAR LA PÁGINA
+                setIndex(0);
+                setAnswers(Array(QUESTIONS.length).fill(null));
+                setResultPost(null);
+              }}
+            >
+              🔄 Rehacer test
             </Button>
           </Box>
         )}
