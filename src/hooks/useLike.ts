@@ -2,20 +2,47 @@ import { useState, useEffect } from 'react';
 import { getLikeInfo, toggleLike } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { useAlertContext } from '../context/AlertContext';
+import { useNavigate } from 'react-router-dom';
 
 export const useLike = (postId: string | number) => {
   const [likesCount, setLikesCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Obtener estado actual
-  const token = useAuthStore((state) => state.token);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
-  
-  // También verificar localStorage directamente como backup
-  const localStorageToken = localStorage.getItem('token');
-  
+  const navigate = useNavigate();
   const { showAlert } = useAlertContext();
+  
+  // ✅ CORRECCIÓN: Usar SOLO una fuente de verdad para el token
+  const getCurrentToken = (): string | null => {
+    // 1. Intenta del store de Zustand
+    const storeToken = useAuthStore.getState().token;
+    
+    // 2. Si no hay en store, intenta de localStorage
+    if (!storeToken) {
+      const localToken = localStorage.getItem('token');
+      if (localToken) {
+        // Sincronizar automáticamente
+        useAuthStore.getState().syncWithLocalStorage?.();
+        return localToken;
+      }
+    }
+    
+    return storeToken;
+  };
+
+  // ✅ CORRECCIÓN: Función de verificación única
+  const checkAuthentication = (): boolean => {
+    const token = getCurrentToken();
+    const isAuth = !!token;
+    
+    console.log('🔐 Estado de autenticación:', {
+      tieneToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'NO HAY',
+      storeUserId: useAuthStore.getState().userId
+    });
+    
+    return isAuth;
+  };
 
   useEffect(() => {
     const fetchLikeInfo = async () => {
@@ -23,16 +50,28 @@ export const useLike = (postId: string | number) => {
         const numericPostId = typeof postId === 'string' ? parseInt(postId, 10) : postId;
         
         if (isNaN(numericPostId)) {
-          console.error('Invalid postId:', postId);
+          console.error('ID de post inválido:', postId);
           return;
         }
 
+        console.log('📡 Obteniendo info de likes para post:', numericPostId);
         const res = await getLikeInfo(numericPostId);
-        setLikesCount(res.data.data.likesCount);
-        setIsLiked(res.data.data.isLikedByUser);
+        
+        // ✅ Verifica que la respuesta tenga la estructura correcta
+        if (res.data?.success && res.data.data) {
+          setLikesCount(res.data.data.likesCount || 0);
+          setIsLiked(res.data.data.isLikedByUser || false);
+        } else {
+          console.warn('Respuesta inesperada:', res.data);
+        }
       } catch (error: any) {
-        console.error('Error fetching like info:', error);
-        // No mostrar alert para errores de fetch de info
+        console.error('❌ Error obteniendo info de likes:', error);
+        
+        // Si es error 401 al obtener info, el usuario no está autenticado
+        if (error.response?.status === 401) {
+          console.log('⚠️ Usuario no autenticado para ver likes');
+          setIsLiked(false);
+        }
       }
     };
     
@@ -42,27 +81,14 @@ export const useLike = (postId: string | number) => {
   }, [postId]);
 
   const handleToggleLike = async () => {
-    // Verificar autenticación de múltiples formas
-    const authState = useAuthStore.getState();
-    const hasStoreAuth = authState.isAuthenticated();
-    const hasLocalStorageAuth = !!localStorageToken;
+    // ✅ Verificación de autenticación CORREGIDA
+    const isAuthenticated = checkAuthentication();
     
-    console.log('🔍 Verificando autenticación para like:', {
-      storeAuth: hasStoreAuth,
-      localStorageAuth: hasLocalStorageAuth,
-      storeToken: authState.token ? 'Presente' : 'Ausente',
-      localStorageToken: localStorageToken ? 'Presente' : 'Ausente'
-    });
-
-    if (!hasStoreAuth && !hasLocalStorageAuth) {
+    if (!isAuthenticated) {
+      console.warn('🔒 Usuario no autenticado - Redirigiendo a login');
       showAlert('Debes iniciar sesión para dar like', 'warning');
+      navigate('/login');
       return;
-    }
-
-    // Si hay token en localStorage pero no en el store, sincronizar
-    if (localStorageToken && !authState.token) {
-      console.log('🔄 Sincronizando token desde localStorage');
-      useAuthStore.getState().syncWithLocalStorage();
     }
 
     setLoading(true);
@@ -74,39 +100,73 @@ export const useLike = (postId: string | number) => {
         return;
       }
 
-      console.log('🔄 Enviando like para post:', numericPostId);
+      console.log('❤️ Enviando like para post:', numericPostId);
+      
+      // ✅ Obtener token FRESCO antes de cada request
+      const currentToken = getCurrentToken();
+      console.log('🔑 Token que se usará:', currentToken?.substring(0, 25) + '...');
       
       const res = await toggleLike(numericPostId);
-      const liked = res.data.data.liked;
-
-      setIsLiked(liked);
-      setLikesCount((prev) => (liked ? prev + 1 : prev - 1));
       
-      console.log('✅ Like procesado:', liked ? 'Añadido' : 'Removido');
-    } catch (error: any) {
-      console.error('❌ Error toggling like:', error);
-      
-      // Manejo específico de error 401
-      if (error.response?.status === 401) {
-        console.error('🔒 Error 401 - Token inválido');
-        showAlert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente', 'error');
-        
-        // Limpiar sesión inválida
-        useAuthStore.getState().clearToken();
-        
-        // Forzar recarga para ir al login
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-      } else if (error.response?.status === 404) {
-        showAlert('El post no existe o fue eliminado', 'error');
-      } else {
-        showAlert('Error al procesar el like. Intenta nuevamente.', 'error');
+      // ✅ Verificar estructura de respuesta
+      if (!res.data?.success) {
+        throw new Error(res.data?.message || 'Error desconocido');
       }
+      
+      const liked = res.data.data?.liked;
+      
+      if (typeof liked !== 'boolean') {
+        throw new Error('Respuesta inválida del servidor');
+      }
+      
+      setIsLiked(liked);
+      setLikesCount(prev => liked ? prev + 1 : prev - 1);
+      
+      console.log(`✅ Like ${liked ? 'añadido' : 'eliminado'} correctamente`);
+      
+    } catch (error: any) {
+      console.error('❌ Error detallado en like:', {
+        mensaje: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+      
+      // ✅ Manejo específico de errores HTTP
+      if (error.response?.status === 401) {
+        console.warn('🔒 Token inválido o expirado - Limpiando sesión');
+        
+        // Limpiar TODAS las fuentes de sesión
+        useAuthStore.getState().clearToken();
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        localStorage.removeItem('role');
+        
+        showAlert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'error');
+        
+        // Redirigir al login
+        setTimeout(() => navigate('/login'), 1000);
+        
+      } else if (error.response?.status === 404) {
+        showAlert('Esta publicación ya no existe o fue eliminada.', 'warning');
+      } else if (error.response?.status === 403) {
+        showAlert('No tienes permiso para realizar esta acción.', 'error');
+      } else if (error.code === 'ECONNABORTED') {
+        showAlert('El servidor tardó demasiado en responder. Intenta nuevamente.', 'warning');
+      } else {
+        showAlert('Error al procesar el like. Por favor, intenta de nuevo.', 'error');
+      }
+      
     } finally {
       setLoading(false);
     }
   };
 
-  return { likesCount, isLiked, loading, handleToggleLike };
+  return { 
+    likesCount, 
+    isLiked, 
+    loading, 
+    handleToggleLike 
+  };
 };
