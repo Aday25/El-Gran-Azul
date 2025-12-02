@@ -23,43 +23,83 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
 
+    console.log("📝 Iniciando registro...");
+
     try {
-      // ✅ CAMBIO CRÍTICO: Usar tu URL real de Render
-      const response = await axios.post("https://server-prod-03xe.onrender.com/auth/register", {
-        username,
-        firstname,
-        lastname,
-        email,
-        password,
-      });
+      const response = await axios.post(
+        "https://server-prod-03xe.onrender.com/auth/register",
+        {
+          username,
+          firstname,
+          lastname,
+          email,
+          password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      if (response.status === 201 && response.data.success) {
+      console.log("✅ Respuesta del servidor:", response.data);
+
+      if (response.data.success) {
         const { token, data: user } = response.data;
+        const userId = user.id?.toString() || user.user_id?.toString();
 
+        console.log("📋 Datos del usuario:", user);
+
+        // ✅ 1. Guardar en localStorage
         localStorage.setItem("token", token);
-        localStorage.setItem(
-          "userId",
-          user.id?.toString() || user.user_id?.toString()
-        );
+        localStorage.setItem("userId", userId);
         localStorage.setItem("username", user.username);
         localStorage.setItem("email", user.email);
         localStorage.setItem("role", user.role || "user");
 
+        console.log("✅ Datos guardados en localStorage");
+
+        // ✅ 2. Guardar en Zustand (INCLUYENDO ROLE)
         setUser({
-          id: user.id?.toString() || user.user_id?.toString(),
+          id: userId,
           name: user.username || `${firstname} ${lastname}`,
           email: user.email,
           token: token,
+          role: user.role || "user", // ← ¡ESTO ES CLAVE!
         });
 
+        console.log("✅ Datos guardados en Zustand");
+
+        // ✅ 3. Verificar que todo se guardó
+        setTimeout(() => {
+          const authState = useAuthStore.getState();
+          console.log("🔍 Verificación post-registro:");
+          console.log("- localStorage token:", localStorage.getItem("token"));
+          console.log("- Zustand token:", authState.token);
+          console.log("- Zustand role:", authState.role);
+          console.log("- ¿Autenticado?:", authState.isAuthenticated());
+        }, 100);
+
+        // ✅ 4. Redirigir
         navigate("/discoveries");
+      } else {
+        setError(response.data.message || "Error en el registro");
       }
     } catch (err: any) {
-      console.error("Error al registrar:", err);
-      setError(
-        err.response?.data?.message ||
-          "Error al registrarse. Por favor, intenta de nuevo."
-      );
+      console.error("❌ Error completo:", err);
+      
+      if (err.response) {
+        console.error("📊 Error details:", err.response.data);
+        setError(
+          err.response?.data?.message ||
+            `Error ${err.response.status}: ${err.response.statusText}`
+        );
+      } else if (err.request) {
+        console.error("🌐 No response:", err.request);
+        setError("No se pudo conectar con el servidor");
+      } else {
+        setError("Error: " + err.message);
+      }
     } finally {
       setLoading(false);
     }

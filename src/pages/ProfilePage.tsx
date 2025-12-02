@@ -17,7 +17,7 @@ const ProfilePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const { showAlert } = useAlertContext(); // ⚡ Hook alert global
+  const { showAlert } = useAlertContext();
   const clearToken = useAuthStore((state) => state.clearToken);
 
   useEffect(() => {
@@ -48,10 +48,24 @@ const ProfilePage: React.FC = () => {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !id) return;
+
+    // Validaciones básicas
+    if (!file.type.startsWith('image/')) {
+      showAlert("Por favor selecciona un archivo de imagen válido", "error");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showAlert("La imagen debe ser menor a 5MB", "error");
+      return;
+    }
 
     setUploading(true);
     try {
+      console.log("🔄 Subiendo imagen a Cloudinary...");
+      
+      // ✅ Subir a Cloudinary primero
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
@@ -62,21 +76,67 @@ const ProfilePage: React.FC = () => {
       );
 
       const imageUrl = res.data.secure_url;
+      console.log("✅ Imagen subida a Cloudinary:", imageUrl);
 
+      // ✅ Actualizar usuario con la URL de Cloudinary
       const token = localStorage.getItem("token");
-      await api.patch(
-        `/users/${id}`,
-        { img: imageUrl },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      console.log("🔑 Token disponible:", !!token);
+      console.log("📤 Enviando PATCH a:", `/users/${id}`);
 
-      setUser(prev => prev ? { ...prev, img: imageUrl } : null);
-      showAlert("Imagen de perfil actualizada correctamente", "success");
+      // ✅ PRIMERO probar con PATCH, si falla probar con PUT
+      try {
+        const response = await api.patch(
+          `/users/${id}`,
+          { img: imageUrl },
+          { 
+            headers: { 
+              Authorization: `Bearer ${token}`,
+            } 
+          }
+        );
+        console.log("✅ Respuesta PATCH:", response.data);
+        
+        if (response.data.success) {
+          setUser(prev => prev ? { ...prev, img: imageUrl } : null);
+          showAlert("Imagen de perfil actualizada correctamente", "success");
+        }
+      } catch (patchError: any) {
+        console.log("❌ PATCH falló, intentando PUT...");
+        
+        // ✅ Fallback a PUT si PATCH no funciona
+        const response = await api.put(
+          `/users/${id}`,
+          { img: imageUrl },
+          { 
+            headers: { 
+              Authorization: `Bearer ${token}`,
+            } 
+          }
+        );
+        console.log("✅ Respuesta PUT:", response.data);
+        
+        if (response.data.success) {
+          setUser(prev => prev ? { ...prev, img: imageUrl } : null);
+          showAlert("Imagen de perfil actualizada correctamente", "success");
+        }
+      }
     } catch (err: any) {
-      console.error("Error subiendo imagen:", err);
-      showAlert("Error al subir la imagen. Inténtalo de nuevo.", "error");
+      console.error("❌ Error subiendo imagen:", err);
+      console.error("🔍 Detalles del error:", {
+        status: err.response?.status,
+        message: err.response?.data?.message,
+        url: err.config?.url,
+        method: err.config?.method
+      });
+      showAlert(
+        err.response?.data?.message || "Error al subir la imagen. Inténtalo de nuevo.", 
+        "error"
+      );
     } finally {
       setUploading(false);
+      // Limpiar input
+      const fileInput = document.getElementById("profile-image-input") as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
     }
   };
 
