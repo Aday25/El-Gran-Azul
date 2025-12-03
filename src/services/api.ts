@@ -22,16 +22,11 @@ api.interceptors.request.use((config) => {
   // Solo mostrar loading en requests que pueden ser largos
   const showLoading = !config.url?.includes('/likes') && 
                      !config.url?.includes('/comments') &&
-                     !config.method?.toLowerCase() === 'get' && 
+                     config.method?.toLowerCase() !== 'get' &&  // ✅ CORREGIDO
                      activeRequests === 0;
   
-  if (showLoading) {
-    // Importar dinámicamente para evitar circular dependencies
-    import('../context/LoadingContext').then(({ useLoading }) => {
-      // Nota: Esto solo funcionaría si estás en un componente React
-      // Mejor manejar el loading en cada componente
-    });
-  }
+  // Eliminé el import dinámico porque no se usa
+  // El loading se maneja mejor en cada componente
   
   activeRequests++;
   return config;
