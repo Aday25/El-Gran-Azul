@@ -5,7 +5,6 @@ import ResultCard, { type Post } from "../components/ResultCard";
 import { useAuthStore } from "../store/authStore";
 import { useAlertContext } from "../context/AlertContext";
 import { pickPostByCategory, type Answer } from "../utils/matcher";
-import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import Confetti from "react-confetti";
 
