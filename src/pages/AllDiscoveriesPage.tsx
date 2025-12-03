@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Box, Typography } from "@mui/material";
 import { api } from "../services/api";
 import { PostCard } from "../components/PostCard";
-import "../styles/PostsPage.css";
+import { useLoading } from "../context/LoadingContext";
 import NavigationButtons from "../components/NavigationButtons";
 import React from 'react';
 
@@ -28,25 +28,27 @@ export interface Post {
 
 export default function AllDiscoveriesPage(): React.JSX.Element {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { showLoading, hideLoading } = useLoading(); // Usar directamente
+
+  const fetchPosts = useCallback(async () => {
+    showLoading("Cargando descubrimientos...");
+    
+    try {
+      const res = await api.get<{ data: Post[] }>("/api/posts");
+      const postsData = res.data.data || [];
+      setPosts(postsData);
+    } catch (err: unknown) {
+      console.error("Error al obtener los descubrimientos:", err);
+      setError("No se pudieron cargar los descubrimientos. Intenta más tarde.");
+    } finally {
+      hideLoading();
+    }
+  }, [showLoading, hideLoading]);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const res = await api.get<{ data: Post[] }>("/api/posts");
-        const postsData = res.data.data || [];
-        setPosts(postsData);
-      } catch (err: unknown) {
-        console.error("Error al obtener los descubrimientos:", err);
-        setError("No se pudieron cargar los descubrimientos. Intenta más tarde.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPosts();
-  }, []);
+  }, [fetchPosts]);
 
   const handleLikeUpdate = (postId: number, newLikesCount: number): void => {
     setPosts(prevPosts =>
@@ -56,11 +58,15 @@ export default function AllDiscoveriesPage(): React.JSX.Element {
     );
   };
 
-  if (loading)
-    return <Typography align="center" sx={{ py: 6 }}>Cargando descubrimientos...</Typography>;
-
-  if (error)
-    return <Typography align="center" sx={{ py: 6 }} color="error">{error}</Typography>;
+  if (error) {
+    return (
+      <Box className="page-container" sx={{ py: 6, textAlign: 'center' }}>
+        <Typography variant="h6" color="error">
+          {error}
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box className="page-container">
@@ -78,7 +84,7 @@ export default function AllDiscoveriesPage(): React.JSX.Element {
         Todos los Descubrimientos
       </Typography>
 
-      {posts.length === 0 ? (
+      {posts.length === 0 && !error ? (
         <Typography variant="h6" align="center" sx={{ mt: 4 }}>
           No hay descubrimientos aún 🐚
         </Typography>

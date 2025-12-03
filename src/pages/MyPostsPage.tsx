@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { PostCard } from "../components/PostCard";
 import '../pages/Discoveries.css';
 import { api } from "../services/api";
+import { useLoading } from "../context/LoadingContext"; // Importar
 import NavigationButtons from "../components/NavigationButtons";
 import React from 'react';
 
@@ -33,6 +34,8 @@ const MyPostsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { showLoading, hideLoading } = useLoading(); // Usar contexto
+
   useEffect(() => {
     if (!userId) {
       setError("Usuario no válido");
@@ -42,6 +45,9 @@ const MyPostsPage: React.FC = () => {
 
     const fetchMyPosts = async () => {
       try {
+        setLoading(true);
+        showLoading("Cargando tus publicaciones..."); // Mostrar loading global
+        
         const res = await api.get(`/api/posts/user/${userId}`);
         let fetchedPosts: MyPost[] = res.data.data || res.data;
 
@@ -58,19 +64,18 @@ const MyPostsPage: React.FC = () => {
         });
 
         console.log("Posts recibidos del backend:", fetchedPosts);
-        console.log("Primer post completo:", JSON.stringify(fetchedPosts[0], null, 2));
-
         setPosts(fetchedPosts);
       } catch (err) {
         console.error("Error al cargar tus publicaciones:", err);
         setError("Error al cargar tus publicaciones");
       } finally {
         setLoading(false);
+        hideLoading(); // Ocultar loading global
       }
     };
 
     fetchMyPosts();
-  }, [userId]);
+  }, [userId, showLoading, hideLoading]);
 
   const handleLikeUpdate = (postId: number, newLikesCount: number) => {
     setPosts(prevPosts =>
@@ -85,32 +90,46 @@ const MyPostsPage: React.FC = () => {
     return rawUrl.startsWith("http") ? rawUrl : `${import.meta.env.VITE_API_URL}${rawUrl}`;
   };
 
-  if (loading) return <p style={{ textAlign: "center" }}>Cargando publicaciones...</p>;
-  if (error) return <p style={{ textAlign: "center" }}>{error}</p>;
-
+  // IMPORTANTE: El contenedor con el fondo SIEMPRE se renderiza
   return (
     <div className="page-container">
+      {/* Título SIEMPRE visible */}
       <h1>Mis publicaciones</h1>
 
-      {posts.length === 0 && <p style={{ textAlign: "center" }}>No tienes publicaciones todavía.</p>}
+      {/* Loading local (solo texto) */}
+      {loading && <p style={{ textAlign: "center", color: "#333" }}>Cargando publicaciones...</p>}
+      
+      {/* Error */}
+      {!loading && error && <p style={{ textAlign: "center", color: "#d32f2f" }}>{error}</p>}
+      
+      {/* Sin posts */}
+      {!loading && !error && posts.length === 0 && (
+        <p style={{ textAlign: "center", color: "#666", fontStyle: "italic" }}>
+          No tienes publicaciones todavía. ¡Crea tu primer descubrimiento!
+        </p>
+      )}
+      
+      {/* Grid de posts */}
+      {!loading && !error && posts.length > 0 && (
+        <div className="cards-grid">
+          {posts.map(post => (
+            <PostCard
+              key={post.id}
+              post={{
+                id: post.id,
+                title: post.title,
+                image: getImageUrl(post.images?.[0]?.url),
+                likes: post.likesCount || 0,
+                user: post.user,
+                date: post.createdAt,
+              }}
+              from={`/my-posts/${userId}`}
+              onLikeUpdate={(newCount: number) => handleLikeUpdate(post.id, newCount)}
+            />
+          ))}
+        </div>
+      )}
 
-      <div className="cards-grid">
-        {posts.map(post => (
-          <PostCard
-            key={post.id}
-            post={{
-              id: post.id, // Cambiado de String(post.id) a post.id
-              title: post.title,
-              image: getImageUrl(post.images?.[0]?.url),
-              likes: post.likesCount || 0,
-              user: post.user,
-              date: post.createdAt,
-            }}
-            from={`/my-posts/${userId}`}
-            onLikeUpdate={(newCount: number) => handleLikeUpdate(post.id, newCount)}
-          />
-        ))}
-      </div>
       <NavigationButtons />
     </div>
   );

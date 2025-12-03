@@ -1,17 +1,13 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Typography, LinearProgress, Stack, Button, Box, Avatar } from "@mui/material";
-import QuestionCard from "../components/QuestionCard";
-import type { Question } from "../components/QuestionCard";
-import ResultCard from "../components/ResultCard";
-import type { Post as ResultPost } from "../components/ResultCard";
+import QuestionCard, { Question } from "../components/QuestionCard";
+import ResultCard, { Post } from "../components/ResultCard";
 import { useAuthStore } from "../store/authStore";
 import { useAlertContext } from "../context/AlertContext";
-import { pickPostByCategory } from "../utils/matcher";
-import type { Answer } from "../utils/matcher";
+import { pickPostByCategory, Answer } from "../utils/matcher";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import Confetti from "react-confetti";
-import React from 'react';
 
 import dancingSeal from "../assets/VirtualAssistant/dancing-seal.gif";
 
@@ -148,11 +144,12 @@ const getPositiveMessage = (answers: (Answer | null)[], postCategory?: string) =
   }
 };
 
-export default function TestGamePage(): React.JSX.Element {
+export default function TestGamePage(): JSX.Element {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(Answer | null)[]>(Array(QUESTIONS.length).fill(null));
-  const [resultPost, setResultPost] = useState<ResultPost | null>(null);
-  const [posts, setPosts] = useState<ResultPost[]>([]);
+  const [resultPost, setResultPost] = useState<Post | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
   const isAuthenticated = useAuthStore((state) => !!state.token);
   const navigate = useNavigate();
@@ -160,11 +157,27 @@ export default function TestGamePage(): React.JSX.Element {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await api.get<{ data: ResultPost[] }>("/api/posts");
-        setPosts(res.data.data || []);
+        setLoading(true);
+        const res = await api.get<{ data: Post[] }>("/api/posts");
+        const postsData = res.data.data || [];
+        setPosts(postsData);
+        
+        // ✅ DEBUG: Verificar estructura de posts
+        if (postsData.length > 0) {
+          console.log("📝 Posts cargados:", postsData.length);
+          console.log("🖼️ Primer post:", {
+            id: postsData[0].id,
+            title: postsData[0].title,
+            image_url: postsData[0].image_url,
+            hasImage: !!postsData[0].image_url
+          });
+        }
+        
       } catch (err) {
         console.error("Error fetching posts:", err);
         showAlert("No se pudieron cargar los posts. Intenta más tarde", "error");
+      } finally {
+        setLoading(false);
       }
     };
     fetchPosts();
@@ -184,15 +197,45 @@ export default function TestGamePage(): React.JSX.Element {
       showAlert("Debes iniciar sesión para hacer el test 🦭", "warning");
       return;
     }
+
+    // Verificar que todas las preguntas estén respondidas
+    const unansweredQuestions = answers.filter(answer => answer === null).length;
+    if (unansweredQuestions > 0) {
+      showAlert(`Tienes ${unansweredQuestions} preguntas sin responder`, "warning");
+      return;
+    }
+
     const chosen = pickPostByCategory(answers.filter(Boolean) as Answer[], posts);
+    
+    // ✅ DEBUG: Verificar post elegido
+    console.log("🎯 Post elegido:", chosen);
+    
     setResultPost(chosen || null);
   };
+
+  // Si está cargando, mostrar loading breve
+  if (loading) {
+    return (
+      <Box sx={{ 
+        minHeight: "100vh", 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center",
+        background: "linear-gradient(180deg, #0077be 0%, #00cfff 100%)"
+      }}>
+        <Typography variant="h5" color="#fff">
+          Cargando... 🌊
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
         background: "linear-gradient(180deg, #0077be 0%, #00cfff 100%)",
+        backgroundSize: "200% 200%",
         animation: "wave 10s ease-in-out infinite",
         overflow: "hidden",
         py: 5,
@@ -201,21 +244,31 @@ export default function TestGamePage(): React.JSX.Element {
       <style>
         {`
           @keyframes wave {
-            0% { background-position: 0 0; }
+            0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
-            100% { background-position: 0 0; }
+            100% { background-position: 0% 50%; }
           }
         `}
       </style>
 
       <Container sx={{ textAlign: "center", position: "relative" }}>
-        <Typography variant="h4" mb={2} color="#fff">🌊 ¿Qué post eres?</Typography>
+        <Typography variant="h4" mb={2} color="#fff" sx={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+          🌊 ¿Qué post eres?
+        </Typography>
 
         {!resultPost && (
           <LinearProgress
             variant="determinate"
             value={((index + 1) / QUESTIONS.length) * 100}
-            sx={{ mb: 3, height: 10, borderRadius: 5 }}
+            sx={{ 
+              mb: 3, 
+              height: 10, 
+              borderRadius: 5,
+              backgroundColor: "rgba(255,255,255,0.3)",
+              "& .MuiLinearProgress-bar": {
+                backgroundColor: "#00ff9d"
+              }
+            }}
           />
         )}
 
@@ -231,7 +284,13 @@ export default function TestGamePage(): React.JSX.Element {
                 onClick={handlePrev}
                 disabled={index === 0}
                 variant="contained"
-                sx={{ backgroundColor: "#fff", color: "#0077be" }}
+                sx={{ 
+                  backgroundColor: "#fff", 
+                  color: "#0077be",
+                  "&:hover": {
+                    backgroundColor: "#f5f5f5",
+                  }
+                }}
               >
                 Atrás
               </Button>
@@ -240,10 +299,15 @@ export default function TestGamePage(): React.JSX.Element {
                   onClick={handleNext}
                   variant="contained"
                   sx={{
+                    backgroundColor: "#00cfff",
+                    color: "#fff",
                     borderRadius: 2,
                     textTransform: "none",
-                    transition: "transform 0.2s ease, box-shadow 0.3s ease",
-                    "&:hover": { transform: "scale(1.05)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" },
+                    "&:hover": {
+                      backgroundColor: "#00b8e6",
+                      transform: "scale(1.05)",
+                    },
+                    transition: "transform 0.2s ease, background-color 0.3s ease",
                   }}
                 >
                   Siguiente
@@ -253,10 +317,16 @@ export default function TestGamePage(): React.JSX.Element {
                   onClick={handleFinish}
                   variant="contained"
                   sx={{
+                    backgroundColor: "#00ff9d",
+                    color: "#0077be",
                     borderRadius: 2,
                     textTransform: "none",
-                    transition: "transform 0.2s ease, box-shadow 0.3s ease",
-                    "&:hover": { transform: "scale(1.05)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" },
+                    fontWeight: "bold",
+                    "&:hover": {
+                      backgroundColor: "#00e68a",
+                      transform: "scale(1.05)",
+                    },
+                    transition: "transform 0.2s ease, background-color 0.3s ease",
                   }}
                 >
                   Ver resultado
@@ -287,33 +357,22 @@ export default function TestGamePage(): React.JSX.Element {
                 mx: "auto",
               }}
             />
-            <Typography variant="h5" mb={1} color="#fff">
+            <Typography variant="h5" mb={3} color="#fff" sx={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
               {getPositiveMessage(answers, resultPost?.category)}
             </Typography>
 
             {resultPost && (
               <Box
-                onClick={() => navigate(`/post/${resultPost.id}`)}
                 sx={{
-                  cursor: "pointer",
                   width: { xs: "90%", sm: "60%", md: "40%" },
                   transition: "transform 0.3s ease",
-                  "&:hover": { transform: "scale(1.05)" },
                 }}
               >
-                <ResultCard
-                  post={{
-                    id: resultPost.id,
-                    title: resultPost.title,
-                    category: resultPost.category,
-                    description: resultPost.description,
-                    image_url: resultPost.image_url || "https://via.placeholder.com/400x200?text=Sin+imagen",
-                  }}
-                />
+                {/* ✅ DEJAR QUE RESULTCARD MANEJE LA NAVEGACIÓN Y LA IMAGEN */}
+                <ResultCard post={resultPost} />
               </Box>
             )}
 
-            {/* ✅ CORREGIR BOTÓN REHACER TEST */}
             <Button
               sx={{
                 mt: 3,
@@ -324,13 +383,12 @@ export default function TestGamePage(): React.JSX.Element {
                 }
               }}
               onClick={() => {
-                // ✅ RESETEAR EL ESTADO EN LUGAR DE RECARGAR LA PÁGINA
                 setIndex(0);
                 setAnswers(Array(QUESTIONS.length).fill(null));
                 setResultPost(null);
               }}
             >
-              🔄 Rehacer test
+              Rehacer test
             </Button>
           </Box>
         )}

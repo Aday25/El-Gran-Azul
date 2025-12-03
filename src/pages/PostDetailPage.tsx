@@ -5,6 +5,7 @@ import { useAuthStore } from "../store/authStore";
 import LikeButton from "../components/LikeButton";
 import "../styles/PostDetailPage.css";
 import { useAlertContext } from "../context/AlertContext";
+import { useLoading } from "../context/LoadingContext"; // Importar
 import NavigationButtons from "../components/NavigationButtons";
 
 interface Post {
@@ -29,8 +30,10 @@ export default function PostDetailPage() {
   const role = useAuthStore((state) => state.role);
   const userId = useAuthStore((state) => state.userId);
   const { showAlert } = useAlertContext();
+  const { showLoading, hideLoading } = useLoading(); // Usar contexto de loading
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false); // Estado local para eliminar
 
   const categoryName = location.state?.categoryName;
   const backPath = location.state?.from || "/posts";
@@ -41,7 +44,6 @@ export default function PostDetailPage() {
   } else if (backPath.includes("/my-posts")) {
     backText = "← Volver a mis descubrimientos";
   }
-
 
   const canEditOrDelete = () => {
     if (!post || !userId) return false;
@@ -55,20 +57,29 @@ export default function PostDetailPage() {
       if (!id) return;
       try {
         setLoading(true);
+        showLoading("Cargando descubrimiento..."); // Mostrar loading global
+        
         const res = await api.get(`/api/posts/${id}`);
         setPost(res.data.data);
       } catch (err: any) {
         console.error("❌ Error fetching post:", err);
         setError("No se pudo cargar el descubrimiento");
+        showAlert("No se pudo cargar el descubrimiento", "error");
       } finally {
         setLoading(false);
+        hideLoading(); // Ocultar loading global
       }
     };
+    
     fetchPost();
-  }, [id]);
+  }, [id, showLoading, hideLoading, showAlert]);
 
   const handleDelete = async () => {
     if (!post) return;
+    
+    setDeleting(true);
+    showLoading("Eliminando descubrimiento...");
+    
     try {
       await api.delete(`/api/posts/${post.id}`);
       showAlert("Post eliminado correctamente", "success");
@@ -78,6 +89,8 @@ export default function PostDetailPage() {
       const errorMessage = err.response?.data?.message || "Error al eliminar el post";
       showAlert(errorMessage, "error");
     } finally {
+      setDeleting(false);
+      hideLoading();
       setConfirmDeleteOpen(false);
     }
   };
@@ -89,9 +102,48 @@ export default function PostDetailPage() {
   const openConfirmDelete = () => setConfirmDeleteOpen(true);
   const cancelDelete = () => setConfirmDeleteOpen(false);
 
-  if (loading) return <p className="loading">Cargando descubrimiento...</p>;
-  if (error) return <p className="error">{error}</p>;
-  if (!post) return <p className="error">No se encontró el descubrimiento.</p>;
+  // Mostrar loading global mientras carga
+  if (loading) {
+    return (
+      <div className="detail-background">
+        <div className="loading-placeholder">
+          {/* El LoadingOverlay se muestra automáticamente desde App.tsx */}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="detail-background">
+        <main className="post-detail-container">
+          <div className="error-container">
+            <h2 className="error-title">Error</h2>
+            <p className="error-message">{error}</p>
+            <Link to="/posts" className="btn btn-back">
+              Volver a descubrimientos
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="detail-background">
+        <main className="post-detail-container">
+          <div className="not-found-container">
+            <h2>No se encontró el descubrimiento</h2>
+            <p>El descubrimiento que buscas no existe o ha sido eliminado.</p>
+            <Link to="/posts" className="btn btn-back">
+              Volver a descubrimientos
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="detail-background">
@@ -146,10 +198,18 @@ export default function PostDetailPage() {
 
         {canEditOrDelete() && (
           <div className="post-actions-admin">
-            <button className="btn btn-edit" onClick={handleEdit}>
+            <button 
+              className="btn btn-edit" 
+              onClick={handleEdit}
+              disabled={deleting}
+            >
               Editar
             </button>
-            <button className="btn btn-delete" onClick={openConfirmDelete}>
+            <button 
+              className="btn btn-delete" 
+              onClick={openConfirmDelete}
+              disabled={deleting}
+            >
               Eliminar
             </button>
           </div>
@@ -162,6 +222,7 @@ export default function PostDetailPage() {
         </div>
 
       </main>
+      
       {confirmDeleteOpen && (
         <div className="confirm-overlay">
           <div className="confirm-box">
@@ -171,16 +232,25 @@ export default function PostDetailPage() {
             </p>
 
             <div className="confirm-actions">
-              <button className="btn btn-cancel" onClick={cancelDelete}>
+              <button 
+                className="btn btn-cancel" 
+                onClick={cancelDelete}
+                disabled={deleting}
+              >
                 Cancelar
               </button>
-              <button className="btn btn-confirm" onClick={handleDelete}>
-                Eliminar definitivamente
+              <button 
+                className="btn btn-confirm" 
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Eliminando..." : "Eliminar definitivamente"}
               </button>
             </div>
           </div>
         </div>
       )}
+      
       <NavigationButtons />
     </div>
   );
