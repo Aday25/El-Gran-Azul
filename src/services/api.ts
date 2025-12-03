@@ -18,16 +18,7 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
-  // Solo mostrar loading en requests que pueden ser largos
-  const showLoading = !config.url?.includes('/likes') && 
-                     !config.url?.includes('/comments') &&
-                     config.method?.toLowerCase() !== 'get' &&  // ✅ CORREGIDO
-                     activeRequests === 0;
-  
-  // Eliminé el import dinámico porque no se usa
-  // El loading se maneja mejor en cada componente
-  
+
   activeRequests++;
   return config;
 });

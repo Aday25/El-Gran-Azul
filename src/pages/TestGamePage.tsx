@@ -152,8 +152,7 @@ export default function TestGamePage() {
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
   const isAuthenticated = useAuthStore((state) => !!state.token);
-  const navigate = useNavigate();
-
+ 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
