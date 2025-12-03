@@ -19,7 +19,7 @@ export function useLoadingApi() {
       delay = 200 
     } = options;
 
-    let loadingTimeout: NodeJS.Timeout;
+    let loadingTimeout: NodeJS.Timeout | undefined = undefined;
 
     try {
       if (shouldShowLoading) {

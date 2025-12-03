@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Container, Typography, LinearProgress, Stack, Button, Box, Avatar } from "@mui/material";
-import QuestionCard, { Question } from "../components/QuestionCard";
-import ResultCard, { Post } from "../components/ResultCard";
+import QuestionCard, { type Question } from "../components/QuestionCard";
+import ResultCard, { type Post } from "../components/ResultCard";
 import { useAuthStore } from "../store/authStore";
 import { useAlertContext } from "../context/AlertContext";
-import { pickPostByCategory, Answer } from "../utils/matcher";
+import { pickPostByCategory, type Answer } from "../utils/matcher";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import Confetti from "react-confetti";
@@ -144,7 +144,7 @@ const getPositiveMessage = (answers: (Answer | null)[], postCategory?: string) =
   }
 };
 
-export default function TestGamePage(): JSX.Element {
+export default function TestGamePage() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(Answer | null)[]>(Array(QUESTIONS.length).fill(null));
   const [resultPost, setResultPost] = useState<Post | null>(null);
@@ -162,7 +162,6 @@ export default function TestGamePage(): JSX.Element {
         const postsData = res.data.data || [];
         setPosts(postsData);
         
-        // ✅ DEBUG: Verificar estructura de posts
         if (postsData.length > 0) {
           console.log("📝 Posts cargados:", postsData.length);
           console.log("🖼️ Primer post:", {
@@ -198,7 +197,6 @@ export default function TestGamePage(): JSX.Element {
       return;
     }
 
-    // Verificar que todas las preguntas estén respondidas
     const unansweredQuestions = answers.filter(answer => answer === null).length;
     if (unansweredQuestions > 0) {
       showAlert(`Tienes ${unansweredQuestions} preguntas sin responder`, "warning");
@@ -207,13 +205,11 @@ export default function TestGamePage(): JSX.Element {
 
     const chosen = pickPostByCategory(answers.filter(Boolean) as Answer[], posts);
     
-    // ✅ DEBUG: Verificar post elegido
     console.log("🎯 Post elegido:", chosen);
     
     setResultPost(chosen || null);
   };
 
-  // Si está cargando, mostrar loading breve
   if (loading) {
     return (
       <Box sx={{ 
@@ -368,7 +364,6 @@ export default function TestGamePage(): JSX.Element {
                   transition: "transform 0.3s ease",
                 }}
               >
-                {/* ✅ DEJAR QUE RESULTCARD MANEJE LA NAVEGACIÓN Y LA IMAGEN */}
                 <ResultCard post={resultPost} />
               </Box>
             )}
